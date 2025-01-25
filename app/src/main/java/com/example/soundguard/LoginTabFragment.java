@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -25,6 +26,7 @@ public class LoginTabFragment extends Fragment {
 
     private EditText emailEditText, passwordEditText;
     private Button loginButton;
+    private TextView forgotPasswordTextView;
     private FirebaseAuth mAuth;
 
     @Override
@@ -35,13 +37,18 @@ public class LoginTabFragment extends Fragment {
         emailEditText = view.findViewById(R.id.login_email);
         passwordEditText = view.findViewById(R.id.login_password);
         loginButton = view.findViewById(R.id.login_button);
+        forgotPasswordTextView = view.findViewById(R.id.forgot_password);
 
         mAuth = FirebaseAuth.getInstance();
 
-        loginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                loginUser();
+        loginButton.setOnClickListener(v -> loginUser());
+
+        forgotPasswordTextView.setOnClickListener(v -> {
+            String email = emailEditText.getText().toString().trim();
+            if (email.isEmpty()) {
+                Toast.makeText(getContext(), "Please enter your email", Toast.LENGTH_SHORT).show();
+            } else {
+                sendPasswordResetEmail(email);
             }
         });
 
@@ -58,38 +65,41 @@ public class LoginTabFragment extends Fragment {
         }
 
         mAuth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            FirebaseUser user = mAuth.getCurrentUser();
-                            if (user != null) {
-                                // Check if email is verified
-                                if (user.isEmailVerified()) {
-                                    Toast.makeText(getContext(), "Success", Toast.LENGTH_SHORT).show();
-                                    moveToNextActivity();
-                                } else {
-                                    // Send verification email
-                                    sendVerificationEmail(user);
-                                }
+                .addOnCompleteListener(getActivity(), task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            if (user.isEmailVerified()) {
+                                Toast.makeText(getContext(), "Success", Toast.LENGTH_SHORT).show();
+                                moveToNextActivity();
+                            } else {
+                                sendVerificationEmail(user);
                             }
-                        } else {
-                            Toast.makeText(getContext(), "Authentication failed.", Toast.LENGTH_SHORT).show();
                         }
+                    } else {
+                        Toast.makeText(getContext(), "Authentication failed.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void sendPasswordResetEmail(String email) {
+        mAuth.sendPasswordResetEmail(email)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Toast.makeText(getContext(), "Password reset email sent.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(getContext(), "Error sending reset email.", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
     private void sendVerificationEmail(FirebaseUser user) {
         user.sendEmailVerification()
-                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if (task.isSuccessful()) {
-                            Toast.makeText(getContext(), "Verification email sent. Please check your inbox.", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(getContext(), "Failed to send verification email.", Toast.LENGTH_SHORT).show();
-                        }
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Toast.makeText(getContext(), "Verification email sent. Please check your inbox.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(getContext(), "Failed to send verification email.", Toast.LENGTH_SHORT).show();
                     }
                 });
     }

@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "soundguard"
+rootProject.name = "easify"
 include(":app")
  
