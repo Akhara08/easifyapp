@@ -95,7 +95,7 @@ public class LoginTabFragment extends Fragment {
     }
 
     private void moveToNextActivity() {
-        Intent intent = new Intent(getActivity(), MainActivity.class);
+        Intent intent = new Intent(getActivity(), ServiceListingActivity.class);
         startActivity(intent);
     }
 }

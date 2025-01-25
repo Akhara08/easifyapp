@@ -20,7 +20,7 @@
             android:exported="false"
             android:theme="@style/Theme.Soundguard" />
         <activity
-            android:name=".MainActivity"
+            android:name=".ServiceListingActivity"
             android:exported="false" />
         <activity
             android:name=".SplashActivity"
