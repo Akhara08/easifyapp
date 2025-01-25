@@ -2,7 +2,9 @@ package com.example.soundguard;
 
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,9 +32,13 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final long SESSION_TIMEOUT = 1 * 60 * 1000; // 10 minutes in milliseconds
+    private Handler sessionHandler;
+    private Runnable sessionTimeoutRunnable;
+
     private ListView audioListView;
     private List<AudioFile> audioFiles = new ArrayList<>();
-    private List<AudioFile> filteredAudioFiles = new ArrayList<>(); // List to hold filtered files
+    private List<AudioFile> filteredAudioFiles = new ArrayList<>();
     private SimpleExoPlayer player;
     private PlayerView playerView;
     private AudioFileAdapter adapter;
@@ -45,11 +51,34 @@ public class MainActivity extends AppCompatActivity {
         audioListView = findViewById(R.id.audioListView);
         playerView = findViewById(R.id.playerView);
 
+        // Initialize session timeout
+        sessionHandler = new Handler();
+        sessionTimeoutRunnable = this::handleSessionTimeout;
+        resetSessionTimeout();
+
         // Fetch the audio file list from S3
         fetchAudioFiles();
 
         // Set up date picker button click listener
         findViewById(R.id.selectDateButton).setOnClickListener(v -> showDatePickerDialog());
+    }
+
+    private void resetSessionTimeout() {
+        sessionHandler.removeCallbacks(sessionTimeoutRunnable);
+        sessionHandler.postDelayed(sessionTimeoutRunnable, SESSION_TIMEOUT);
+    }
+
+    private void handleSessionTimeout() {
+        // Redirect to login page after session timeout
+        Intent intent = new Intent(MainActivity.this, MainActivity2.class);
+        startActivity(intent);
+        finish();
+    }
+
+    @Override
+    public void onUserInteraction() {
+        super.onUserInteraction();
+        resetSessionTimeout(); // Reset the timer on user interaction
     }
 
     private void showDatePickerDialog() {
@@ -61,7 +90,6 @@ public class MainActivity extends AppCompatActivity {
         DatePickerDialog datePickerDialog = new DatePickerDialog(
                 MainActivity.this,
                 (view, selectedYear, selectedMonth, selectedDay) -> {
-                    // Format the selected date
                     String selectedDate = String.format("%02d %s %d", selectedDay, getMonthName(selectedMonth), selectedYear);
                     filterAudioFilesByDate(selectedDate);
                 }, year, month, day);
@@ -85,12 +113,11 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "No files found for the selected date", Toast.LENGTH_SHORT).show();
         }
 
-        adapter.notifyDataSetChanged(); // Update the ListView with the filtered list
+        adapter.notifyDataSetChanged();
     }
 
     private void fetchAudioFiles() {
         runOnUiThread(() -> {
-            // Show the progress bar while loading
             findViewById(R.id.loadingProgressBar).setVisibility(View.VISIBLE);
             findViewById(R.id.emptyStateTextView).setVisibility(View.GONE);
         });
@@ -98,9 +125,9 @@ public class MainActivity extends AppCompatActivity {
         new Thread(() -> {
             try {
                 ObjectListing objectListing = MyApp.s3Client.listObjects(new ListObjectsRequest()
-                        .withBucketName("soundguard")); // Replace with your bucket name
+                        .withBucketName("soundguard"));
 
-                audioFiles.clear(); // Clear the previous list
+                audioFiles.clear();
                 for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
                     audioFiles.add(new AudioFile(objectSummary.getKey()));
                 }
@@ -110,12 +137,11 @@ public class MainActivity extends AppCompatActivity {
                         findViewById(R.id.emptyStateTextView).setVisibility(View.VISIBLE);
                     } else {
                         filteredAudioFiles.clear();
-                        filteredAudioFiles.addAll(audioFiles); // Initially display all files
+                        filteredAudioFiles.addAll(audioFiles);
                         adapter = new AudioFileAdapter(this, filteredAudioFiles);
                         audioListView.setAdapter(adapter);
                     }
 
-                    // Hide the progress bar after loading
                     findViewById(R.id.loadingProgressBar).setVisibility(View.GONE);
                 });
 
@@ -123,7 +149,6 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("S3Error", "Error fetching files", e);
                 runOnUiThread(() -> {
                     Toast.makeText(this, "Failed to fetch files", Toast.LENGTH_SHORT).show();
-                    // Hide the progress bar and show the empty state if needed
                     findViewById(R.id.loadingProgressBar).setVisibility(View.GONE);
                     findViewById(R.id.emptyStateTextView).setVisibility(View.VISIBLE);
                 });
@@ -134,10 +159,10 @@ public class MainActivity extends AppCompatActivity {
     private void deleteAudioFile(String fileName) {
         new Thread(() -> {
             try {
-                MyApp.s3Client.deleteObject("soundguard", fileName); // Replace with your bucket name
+                MyApp.s3Client.deleteObject("soundguard", fileName);
                 runOnUiThread(() -> {
                     Toast.makeText(this, fileName + " deleted", Toast.LENGTH_SHORT).show();
-                    fetchAudioFiles(); // Refresh the list after deletion
+                    fetchAudioFiles();
                 });
             } catch (Exception e) {
                 Log.e("S3Error", "Error deleting file: " + fileName, e);
@@ -202,11 +227,10 @@ public class MainActivity extends AppCompatActivity {
             checkBox.setChecked(audioFile.isChecked);
 
             checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                audioFile.isChecked = isChecked; // Update the checked state
+                audioFile.isChecked = isChecked;
                 if (isChecked) {
-                    // If checked, show the confirmation dialog
                     confirmDeletion(audioFile.fileName);
-                    checkBox.setChecked(false); // Uncheck the checkbox after confirming deletion
+                    checkBox.setChecked(false);
                 }
             });
 
@@ -223,7 +247,7 @@ public class MainActivity extends AppCompatActivity {
         player = new SimpleExoPlayer.Builder(this).build();
         playerView.setPlayer(player);
 
-        String audioUrl = "https://soundguard.s3.amazonaws.com/" + fileName;  // Replace with your S3 URL
+        String audioUrl = "https://soundguard.s3.amazonaws.com/" + fileName;
         MediaItem mediaItem = MediaItem.fromUri(audioUrl);
         player.setMediaItem(mediaItem);
         player.prepare();
@@ -237,6 +261,12 @@ public class MainActivity extends AppCompatActivity {
             player.release();
             player = null;
         }
+        sessionHandler.removeCallbacks(sessionTimeoutRunnable);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        resetSessionTimeout();
     }
 }
-

@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.example.soundguard" />
+                  <option name="mobileSdkAppId" value="1:261369918088:android:19fc52a72c4b217efa253d" />
+                  <option name="projectId" value="soundguard-e8bae" />
+                  <option name="projectNumber" value="261369918088" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
