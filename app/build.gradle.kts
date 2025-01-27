@@ -49,6 +49,7 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation ("com.amazonaws:aws-android-sdk-s3:2.42.+")
+    implementation ("com.airbnb.android:lottie:+")
 
 // OkHttp for making HTTP requests
     implementation ("com.squareup.okhttp3:okhttp:4.9.3")

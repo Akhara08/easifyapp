@@ -13,13 +13,19 @@
         android:padding="20dp"
         tools:context=".LoginTabFragment">
 
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:src="@drawable/loginimg"
-            android:scaleType="centerCrop"
-            android:layout_marginBottom="20dp" />
 
+        <com.airbnb.lottie.LottieAnimationView
+            android:layout_width="321dp"
+            android:layout_height="168dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.666"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.23"
+            app:lottie_autoPlay="true"
+            app:lottie_loop="true"
+            app:lottie_rawRes="@raw/lottie"/>
         <EditText
             android:id="@+id/login_email"
             android:layout_width="match_parent"
@@ -55,12 +61,12 @@
 
         <Button
             android:id="@+id/login_button"
-            android:layout_width="match_parent"
-            android:layout_height="70dp"
+            android:layout_width="375dp"
+            android:layout_height="60dp"
+            android:layout_marginTop="30dp"
             android:text="Login"
             android:textSize="18sp"
-            app:cornerRadius="30dp"
-            android:layout_marginTop="30dp" />
+            app:cornerRadius="30dp" />
     </LinearLayout>
 
 </FrameLayout>
