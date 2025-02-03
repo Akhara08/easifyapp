@@ -28,4 +28,9 @@ public class ServiceItem {
     public int getImageResId() {
         return imageResId;
     }
+
+    // Add setter for imageResId
+    public void setImageResId(int imageResId) {
+        this.imageResId = imageResId;
+    }
 }

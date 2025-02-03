@@ -19,8 +19,6 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import java.util.Calendar;
 import com.google.firebase.auth.FirebaseUser;
-//import com.google.firebase.database.DatabaseReference;
-//import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -30,7 +28,7 @@ import java.util.Locale;
 import java.util.Date;
 import java.text.ParseException;
 import java.util.Map;
-
+import android.util.Patterns;
 
 public class SignupTabFragment extends Fragment {
 
@@ -95,72 +93,100 @@ public class SignupTabFragment extends Fragment {
         String confirmPassword = confirmPasswordEditText.getText().toString().trim();
         String dob = dobEditText.getText().toString().trim();
 
-        if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty() || dob.isEmpty()) {
-            Toast.makeText(getContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show();
+        // Validate email format
+        if (email.isEmpty() || !isValidEmail(email)) {
+            Toast.makeText(getContext(), "Please enter a valid email", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // Validate password strength
+        if (password.isEmpty() || !isValidPassword(password)) {
+            Toast.makeText(getContext(), "Password must be at least 6 characters long and contain a number and a letter", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Validate password confirmation
         if (!password.equals(confirmPassword)) {
             Toast.makeText(getContext(), "Passwords do not match", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // Check if DOB is empty
+        if (dob.isEmpty()) {
+            Toast.makeText(getContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Proceed with Firebase signup
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            // Sign up success, add user info to Firestore
+                            // Handle success
                             FirebaseUser user = mAuth.getCurrentUser();
                             String userId = user.getUid();
                             FirebaseFirestore db = FirebaseFirestore.getInstance();
                             DocumentReference userRef = db.collection("users").document(userId);
 
-                            // Calculate age from date of birth
-                            SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy", Locale.getDefault());
-                            Date birthDate;
-                            int age = 0;
-                            try {
-                                birthDate = sdf.parse(dob);
-                                Calendar dobCalendar = Calendar.getInstance();
-                                dobCalendar.setTime(birthDate);
-                                Calendar today = Calendar.getInstance();
-                                age = today.get(Calendar.YEAR) - dobCalendar.get(Calendar.YEAR);
-                                if (today.get(Calendar.DAY_OF_YEAR) < dobCalendar.get(Calendar.DAY_OF_YEAR)) {
-                                    age--;
-                                }
-                            } catch (ParseException e) {
-                                e.printStackTrace();
-                            }
-
-                            // Create a HashMap to store user information
-                            Map<String, Object> userInfo = new HashMap<>();
-                            userInfo.put("email", email);
-                            userInfo.put("dob", dob);
-                            userInfo.put("age", age);
-
-                            // Add user information to Firestore
-                            userRef.set(userInfo)
-                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                        @Override
-                                        public void onSuccess(Void aVoid) {
-                                            Toast.makeText(getContext(), "Sign up successful", Toast.LENGTH_SHORT).show();
-                                            // Navigate to the next screen or perform other actions
-                                        }
-                                    })
-                                    .addOnFailureListener(new OnFailureListener() {
-                                        @Override
-                                        public void onFailure(@NonNull Exception e) {
-                                            Toast.makeText(getContext(), "Failed to add user information to Firestore", Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
+                            // Calculate age from DOB and save data to Firestore
+                            saveUserInfo(email, dob, userRef);
                         } else {
-                            // If sign up fails, display a message to the user.
+                            // Handle failure
                             Toast.makeText(getContext(), "Authentication failed.", Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
     }
 
+    // Method to validate email format using regex
+    private boolean isValidEmail(String email) {
+        return Patterns.EMAIL_ADDRESS.matcher(email).matches();
+    }
 
+    // Method to validate password strength
+    private boolean isValidPassword(String password) {
+        // Check if password has at least 6 characters, one digit, and one letter
+        return password.length() >= 6 && password.matches(".*[A-Za-z].*") && password.matches(".*[0-9].*");
+    }
+
+    private void saveUserInfo(String email, String dob, DocumentReference userRef) {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy", Locale.getDefault());
+        Date birthDate;
+        int age = 0;
+        try {
+            birthDate = sdf.parse(dob);
+            Calendar dobCalendar = Calendar.getInstance();
+            dobCalendar.setTime(birthDate);
+            Calendar today = Calendar.getInstance();
+            age = today.get(Calendar.YEAR) - dobCalendar.get(Calendar.YEAR);
+            if (today.get(Calendar.DAY_OF_YEAR) < dobCalendar.get(Calendar.DAY_OF_YEAR)) {
+                age--;
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        // Create user info map and save to Firestore
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("email", email);
+        userInfo.put("dob", dob);
+        userInfo.put("age", age);
+
+        // Save data to Firestore
+        userRef.set(userInfo)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Toast.makeText(getContext(), "Sign up successful", Toast.LENGTH_SHORT).show();
+                        // Navigate to the next screen or perform other actions
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(getContext(), "Failed to add user information to Firestore", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
 }

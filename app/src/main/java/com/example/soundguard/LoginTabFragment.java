@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.util.Patterns;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -47,6 +48,8 @@ public class LoginTabFragment extends Fragment {
             String email = emailEditText.getText().toString().trim();
             if (email.isEmpty()) {
                 Toast.makeText(getContext(), "Please enter your email", Toast.LENGTH_SHORT).show();
+            } else if (!isValidEmail(email)) {
+                Toast.makeText(getContext(), "Please enter a valid email", Toast.LENGTH_SHORT).show();
             } else {
                 sendPasswordResetEmail(email);
             }
@@ -64,8 +67,16 @@ public class LoginTabFragment extends Fragment {
             return;
         }
 
+        if (!isValidEmail(email)) {
+            Toast.makeText(getContext(), "Please enter a valid email", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        loginButton.setEnabled(false); // Disable login button to prevent multiple clicks
+
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(getActivity(), task -> {
+                    loginButton.setEnabled(true); // Re-enable login button after the task is complete
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
@@ -77,7 +88,7 @@ public class LoginTabFragment extends Fragment {
                             }
                         }
                     } else {
-                        Toast.makeText(getContext(), "Authentication failed.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "Authentication failed. Check your email and password", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -107,5 +118,10 @@ public class LoginTabFragment extends Fragment {
     private void moveToNextActivity() {
         Intent intent = new Intent(getActivity(), ServiceListingActivity.class);
         startActivity(intent);
+    }
+
+    // Method to validate email format using regex
+    private boolean isValidEmail(String email) {
+        return Patterns.EMAIL_ADDRESS.matcher(email).matches();
     }
 }
