@@ -1,0 +1,6 @@
+<!-- colors.xml -->
+<resources>
+    <color name="colorPrimary">#3F51B5</color> <!-- Blue -->
+    <color name="colorAccent">#FF4081</color> <!-- Pink -->
+    <color name="lightGray">#F5F5F5</color>
+</resources>

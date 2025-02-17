@@ -27,7 +27,7 @@ public class ServiceListingActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
 
-        serviceAdapter = new ServiceAdapter(filteredServiceList);
+        serviceAdapter = new ServiceAdapter(this,filteredServiceList);
         recyclerView.setAdapter(serviceAdapter);
 
         fetchServices(); // Fetch data from API
