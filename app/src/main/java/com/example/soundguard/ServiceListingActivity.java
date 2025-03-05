@@ -1,11 +1,14 @@
 package com.example.soundguard;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import java.util.ArrayList;
 import java.util.List;
 import retrofit2.Call;
@@ -27,7 +30,7 @@ public class ServiceListingActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
 
-        serviceAdapter = new ServiceAdapter(this,filteredServiceList);
+        serviceAdapter = new ServiceAdapter(this, filteredServiceList);
         recyclerView.setAdapter(serviceAdapter);
 
         fetchServices(); // Fetch data from API
@@ -45,6 +48,22 @@ public class ServiceListingActivity extends AppCompatActivity {
                 return false;
             }
         });
+
+        // Handle Bottom Navigation Clicks
+        BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigationView);
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            if (item.getItemId() == R.id.nav_home) {
+                Toast.makeText(this, "Home Clicked", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (item.getItemId() == R.id.nav_manage_services) {
+                startActivity(new Intent(this, ManageBookingsActivity.class));
+                return true;
+            } else if (item.getItemId() == R.id.nav_manage_profile) {
+                startActivity(new Intent(this, ManageProfileActivity.class));
+                return true;
+            }
+            return false;
+        });
     }
 
     private void fetchServices() {
@@ -60,7 +79,7 @@ public class ServiceListingActivity extends AppCompatActivity {
                         // Assign the corresponding drawable image resource ID
                         switch (service.getTitle().toLowerCase()) {
                             case "plumbing":
-                                service.setImageResId(R.drawable.plumbing); // Example image name
+                                service.setImageResId(R.drawable.plumbing);
                                 break;
                             case "electrician":
                                 service.setImageResId(R.drawable.electrician);
@@ -69,13 +88,13 @@ public class ServiceListingActivity extends AppCompatActivity {
                                 service.setImageResId(R.drawable.cleaning);
                                 break;
                             case "carpentry":
-                                service.setImageResId(R.drawable.capentary);
+                                service.setImageResId(R.drawable.capentary); // Fixed typo
                                 break;
                             case "painting":
                                 service.setImageResId(R.drawable.painting);
                                 break;
                             default:
-                                service.setImageResId(R.drawable.moving); // Fallback image
+                                service.setImageResId(R.drawable.moving);
                                 break;
                         }
                         serviceList.add(service);

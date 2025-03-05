@@ -23,6 +23,15 @@
         android:theme="@style/Theme.Soundguard"
         tools:targetApi="31">
         <activity
+            android:name=".EditBookingActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ManageProfileActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ManageBookingsActivity"
+            android:exported="false" />
+        <activity
             android:name=".BookingDetailsActivity"
             android:exported="false" />
         <activity
